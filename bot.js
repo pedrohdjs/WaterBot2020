@@ -12,6 +12,9 @@ console.log("Bot started.");
 //Followers array
 let followers = [];
 
+//Stores the last tweet in order to prevent spamming (tagging one follower two times in a row)
+let lastTweet = undefined;
+
 //Get all of the bot's followers
 async function getFollowers () {
     let query = await bot.get('followers/list', { screen_name: config.screen_name });
@@ -20,6 +23,12 @@ async function getFollowers () {
         followers.push(element.screen_name);
     });
     return followers;    
+}
+
+//Gets the bot's last tweet
+async function getLastTweet() {
+    let tweets = await (await bot.get('statuses/user_timeline', { screen_name: config.screen_name })).data;
+    lastTweet = tweets[0].text;
 }
 
 //Updates the followers array
@@ -34,12 +43,14 @@ async function postStatus (status) {
 }
 
 //Status generation, based on getting random elements from the phrases module and random followers from Twitter.
-async function generateStatus () {
+function generateStatus () {
     let newPost = "";
     //Gets a random user from the followers array, removes it from the array and adds it to the newPost string.
     for (let i = 0; i < 3; i++){ 
-        const user = rand(followers);
-        followers = followers.filter(e => {return e !== user});
+        let user = rand(followers);
+        if (lastTweet != undefined) 
+            while (lastTweet.includes(user)) //If the user has been tagged in the last tweet, he wont be tagged again
+                user = rand(followers);
         if (user !== undefined && user !== null)
             newPost += `@${user} `;
     }
@@ -50,22 +61,25 @@ async function generateStatus () {
 /*This function calls the previous functions to generate and post a status and deals with the the post request's
 success or failure*/ 
 async function action () {
-    let newPost = await generateStatus();
+    let newPost = generateStatus();
     const res = await postStatus(newPost);
     if (res.err){
         console.log("Status couldn't be posted:\n" + res.err)
     }
     else {
         console.log("Status posted:\n" + newPost);
+        lastTweet = newPost;
     }
 }
 
-//First post after update
-postStatus('Update message!');
+async function init () {
+    await updateFollowers();
+    await getLastTweet();
+    await action();
+}
 
-//Initial followers list update
-updateFollowers();
+/*Initiate followers list and post the first tweet
+Due to heroku, this will be called every 24 hours*/
+init();
 //Makes the action() function be executed every 1 hour.
 setInterval(action, 1000*60*60);
-//Updates the follower array every 4 hours
-setInterval(updateFollowers, 1000*60*60*4 + 1000*60*20)
