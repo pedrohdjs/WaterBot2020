@@ -49,7 +49,7 @@ function generateStatus () {
     for (let i = 0; i < 3; i++){ 
         let user = rand(followers);
         if (lastTweet != undefined) 
-            while (lastTweet.includes(user)) //If the user has been tagged in the last tweet, he wont be tagged again
+            while (lastTweet.includes(user) || newPost.includes(user)) //If the user has been tagged in the last tweet, he wont be tagged again
                 user = rand(followers);
         if (user !== undefined && user !== null)
             newPost += `@${user} `;
