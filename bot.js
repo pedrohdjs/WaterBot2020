@@ -12,28 +12,44 @@ console.log("Bot started.");
 //Followers array
 let followers = [];
 
-//Stores the last tweet in order to prevent spamming (tagging one follower two times in a row)
-let lastTweet = undefined;
+//Stores the 4 last tweets in order to prevent spamming (tagging one follower too frequently)
+let lastTweets = undefined;
 
-//Get all of the bot's followers
-async function getFollowers () {
-    let query = await bot.get('followers/list', { screen_name: config.screen_name });
-    followers = [];
-    query.data.users.forEach(element => {
-        followers.push(element.screen_name);
-    });
-    return followers;    
+//Gets the bot's last tweets
+async function getLastTweets() {
+    let tweets = await (await bot.get('statuses/user_timeline', { screen_name: config.screen_name })).data;
+    lastTweets = [tweets[0].text,tweets[1].text,tweets[2].text,tweets[3].text] //From newest to oldest
 }
 
-//Gets the bot's last tweet
-async function getLastTweet() {
-    let tweets = await (await bot.get('statuses/user_timeline', { screen_name: config.screen_name })).data;
-    lastTweet = tweets[0].text;
+//Returns a username not tagged in the last 4 tweets
+function getValidUser() {
+    let user = rand(followers);
+    while (!isUserValid(user))
+        user = rand(followers);
+    return user;
+}
+
+//Returns a boolean value 
+function isUserValid(user) {
+    if (lastTweets[0].includes(user) || lastTweets[1].includes(user) || lastTweets[2].includes(user) || lastTweets[3].includes(user))
+        return false;
+    else
+        return true;
+}
+
+//Updates lastTweets
+function updateTweets (tweet) {
+    lastTweets.pop();
+    lastTweets.unshift(tweet);
 }
 
 //Updates the followers array
 async function updateFollowers () {
-    followers = await getFollowers();
+    let query = await bot.get('followers/list', { screen_name: config.screen_name, count: 200 });
+    followers = [];
+    query.data.users.forEach(element => {
+        followers.push(element.screen_name);
+    });
 }
 
 //Post a new status (tweet)
@@ -47,10 +63,9 @@ function generateStatus () {
     let newPost = "";
     //Gets a random user from the followers array, removes it from the array and adds it to the newPost string.
     for (let i = 0; i < 3; i++){ 
-        let user = rand(followers);
-        if (lastTweet != undefined) 
-            while (lastTweet.includes(user) || newPost.includes(user)) //If the user has been tagged in the last tweet, he wont be tagged again
-                user = rand(followers);
+        let user = getValidUser();
+        while (newPost.includes(user)) //If the user is already present in the tweet, the bot gets another one
+                user = getValidUser();
         if (user !== undefined && user !== null)
             newPost += `@${user} `;
     }
@@ -68,18 +83,18 @@ async function action () {
     }
     else {
         console.log("Status posted:\n" + newPost);
-        lastTweet = newPost;
+        updateTweets(newPost);
     }
 }
 
 async function init () {
     await updateFollowers();
-    await getLastTweet();
+    await getLastTweets();
     await action();
 }
 
 /*Initiate followers list and post the first tweet
 Due to heroku, this will be called every 24 hours*/
 init();
-//Makes the action() function be executed every 1 hour.
-setInterval(action, 1000*60*60);
+//Makes the action() function be executed every 50 minutes;
+setInterval(action, 1000*60*50);
