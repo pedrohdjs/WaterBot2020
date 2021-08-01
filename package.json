@@ -1,15 +1,15 @@
 {
-  "name": "beba-agua-bot",
-  "version": "1.0.0",
-  "description": "Um bot que te faz beber agua",
-  "main": "bot.js",
-  "scripts": {
-    "start": "nodemon bot.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "Pedorrr",
-  "license": "ISC",
-  "dependencies": {
-    "twit": "^2.2.11"
-  }
+	"name": "water-bot-2020",
+	"version": "1.0.0",
+	"description": "A bot to remind you to drink water!",
+	"main": "./src/index.js",
+	"scripts": {
+		"start": "node ./src/index.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "pedrohdjs",
+	"license": "MIT",
+	"dependencies": {
+		"twit": "^2.2.11"
+	}
 }
