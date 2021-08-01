@@ -1,7 +1,7 @@
 # WaterBot2020
 
 A Twitter bot that reminds it's followers to drink some water!
-It is currently deployed on Heroku, using a scheduler to post Tweets every hour.
+It is currently deployed on Heroku, using a scheduler to post Tweets 30 minutes.
 You may see it in action (using sentences in portuguese) [right here!](https://twitter.com/AguaBot2020)
 
 ## How does it work?
